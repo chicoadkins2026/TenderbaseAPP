@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
 import {
-  SUPABASE_ANON_KEY, SUPABASE_URL, isAuthBypassed, isSupabaseConfigured,
+  SUPABASE_ANON_KEY, SUPABASE_URL, isAuthBypassed, isDemoEnabled, isSupabaseConfigured,
 } from './supabase-config';
+import { isDemoRequest } from './demo';
 
 /** Routes that require a signed-in user. */
 const PROTECTED = ['/', '/search', '/saved', '/alerts', '/profile', '/tenders', '/briefing', '/welcome'];
@@ -24,11 +24,10 @@ function isProtected(pathname: string): boolean {
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  // Without credentials the app runs unauthenticated rather than erroring.
+  // The explicit demo route is allowed to establish the demo cookie without
+  // requiring Supabase. All other requests follow the normal auth flow.
   if (!isSupabaseConfigured) return response;
-
-  // Preview bypass: skip the guard entirely, but still refresh any real session.
-  if (isAuthBypassed) return response;
+  if (isAuthBypassed || (isDemoEnabled && isDemoRequest(request))) return response;
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
@@ -44,11 +43,12 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const { pathname, search } = request.nextUrl;
 
-  if (!user && isProtected(pathname)) {
+  const demoActive = isDemoEnabled && request.cookies.get('tb_demo')?.value === 'pro';
+
+  if (!user && !demoActive && isProtected(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.search = '';
-    // Preserve where they were headed so login can return them there.
     if (pathname !== '/') url.searchParams.set('next', `${pathname}${search}`);
     return NextResponse.redirect(url);
   }
@@ -62,3 +62,5 @@ export async function updateSession(request: NextRequest) {
 
   return response;
 }
+
+import { createServerClient } from '@supabase/ssr';
