@@ -6,7 +6,7 @@ import { entitlementFromSubscription, type SubscriptionSnapshot } from '@/lib/en
 import { fetchSubscription } from '@/lib/billing.server';
 import { getUser } from '@/lib/supabase-server';
 import { createClient } from '@/lib/supabase-server';
-import { isAuthBypassed, isSupabaseConfigured } from '@/lib/supabase-config';
+import { isAuthBypassed, isDemoEnabled, isSupabaseConfigured } from '@/lib/supabase-config';
 import type { Tier } from '@/types/tier';
 
 const VALID: Tier[] = ['free', 'basic', 'pro'];
@@ -47,6 +47,11 @@ export async function getServerTier(): Promise<ServerTier> {
   } catch {
     // Unreachable auth on a preview deployment falls through to the cookie;
     // a configured one fails closed to 'guest' just below.
+  }
+
+  const demo = cookies().get('tb_demo')?.value;
+  if (isDemoEnabled && demo === 'pro') {
+    return { tier: 'pro', trialEnd: null, source: 'cookie' };
   }
 
   if (!previewGrantAllowed({ supabaseConfigured: isSupabaseConfigured, authBypassed: isAuthBypassed })) {
