@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, PlayCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
-import { isSupabaseConfigured } from '@/lib/supabase-config';
+import { isDemoEnabled, isSupabaseConfigured } from '@/lib/supabase-config';
 import { cn } from '@/lib/cn';
 
 /** Google's mark. Inline so it renders without a network request. */
@@ -45,7 +45,6 @@ export function LoginView() {
         provider: 'google',
         options: { redirectTo: redirectTo.toString() },
       });
-      // On success the browser navigates away, so nothing below runs.
       if (err) {
         setError(err.message);
         setLoading(false);
@@ -80,34 +79,27 @@ export function LoginView() {
       </div>
 
       {shownError && (
-        <div
-          role="alert"
-          className="mt-6 flex items-start gap-2.5 rounded-[12px] border border-urgent/25 bg-urgent-bg px-3 py-2.5"
-        >
+        <div role="alert" className="mt-6 flex items-start gap-2.5 rounded-[12px] border border-urgent/25 bg-urgent-bg px-3 py-2.5">
           <AlertCircle size={15} strokeWidth={2.1} className="mt-px shrink-0 text-urgent" aria-hidden />
           <p className="text-[12.5px] leading-[1.45] text-ink-2">{shownError}</p>
         </div>
       )}
 
-      {!isSupabaseConfigured && (
-        <div
-          role="alert"
-          className="mt-6 rounded-[12px] border border-soon/25 bg-soon-bg px-3 py-2.5"
-        >
-          <p className="text-[12.5px] font-semibold text-soon">Sign-in not configured</p>
-          <p className="mt-0.5 text-[11.5px] leading-[1.45] text-ink-2">
-            Add your Supabase URL and key to <code>.env.local</code>. See GOOGLE-AUTH-SETUP.md.
-          </p>
+      <div className="mt-9 space-y-3">
+        {isDemoEnabled && (
           <Link
-            href="/welcome"
-            className="mt-2 inline-block text-[11.5px] font-semibold text-navy underline decoration-line underline-offset-2"
+            href="/demo"
+            className={cn(
+              'flex h-[52px] w-full items-center justify-center gap-2.5 rounded-[12px]',
+              'bg-navy text-[16px] font-semibold text-white transition-opacity hover:opacity-90',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/40',
+            )}
           >
-            Preview the first-run plan screen →
+            <PlayCircle size={19} aria-hidden />
+            Try TenderBase Pro Demo
           </Link>
-        </div>
-      )}
+        )}
 
-      <div className="mt-9">
         <button
           type="button"
           onClick={handleGoogle}
@@ -121,30 +113,29 @@ export function LoginView() {
           )}
         >
           {loading ? (
-            <>
-              <Loader2 size={18} className="animate-spin" aria-hidden />
-              Redirecting to Google…
-            </>
+            <><Loader2 size={18} className="animate-spin" aria-hidden /> Redirecting to Google…</>
           ) : (
-            <>
-              <GoogleMark />
-              Continue with Google
-            </>
+            <><GoogleMark /> Continue with Google</>
           )}
         </button>
 
-        <p className="mt-4 text-center text-[12.5px] leading-[1.5] text-ink-2">
-          TenderBase uses your Google account to sign you in. We only read your
-          name and email address.
+        <p className="text-center text-[12.5px] leading-[1.5] text-ink-2">
+          The demo opens TenderBase with Pro features enabled. No Google account is required.
         </p>
       </div>
 
-      <div className="flex-1" />
+      {!isSupabaseConfigured && !isDemoEnabled && (
+        <div role="alert" className="mt-6 rounded-[12px] border border-soon/25 bg-soon-bg px-3 py-2.5">
+          <p className="text-[12.5px] font-semibold text-soon">Sign-in not configured</p>
+          <p className="mt-0.5 text-[11.5px] leading-[1.45] text-ink-2">
+            Add your Supabase URL and key to <code>.env.local</code>. See GOOGLE-AUTH-SETUP.md.
+          </p>
+        </div>
+      )}
 
+      <div className="flex-1" />
       <p className="mt-8 text-center text-[11.5px] leading-[1.55] text-ink-3">
-        By continuing you agree to TenderBase&apos;s{' '}
-        <span className="underline">Terms of Service</span> and{' '}
-        <span className="underline">Privacy Policy</span>.
+        By continuing you agree to TenderBase&apos;s <span className="underline">Terms of Service</span> and <span className="underline">Privacy Policy</span>.
       </p>
     </main>
   );
