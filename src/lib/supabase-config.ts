@@ -18,14 +18,11 @@ export const isSupabaseConfigured =
   !isPlaceholder(SUPABASE_URL) && !isPlaceholder(SUPABASE_ANON_KEY);
 
 /**
- * Dev-only auth bypass, for browsing the app in a sandboxed preview where the
- * OAuth redirect URI cannot be allowlisted.
- *
- * Hard-gated on NODE_ENV !== 'production' as well as the flag, so it cannot be
- * switched on in a deployed build even by setting the env var. Never a
- * substitute for a real session: it only relaxes the route guard, and any
- * Supabase query still runs as an anonymous user under RLS.
+ * Preview-only auth bypass. Never enable this in production.
  */
 export const isAuthBypassed =
   process.env.NODE_ENV !== 'production' &&
   process.env.NEXT_PUBLIC_DEV_AUTH_BYPASS === 'true';
+
+/** Public demo mode is explicitly enabled by the deployment environment. */
+export const isDemoEnabled = process.env.NEXT_PUBLIC_DEMO_LOGIN === 'true';
