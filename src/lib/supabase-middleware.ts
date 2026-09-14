@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 import {
   SUPABASE_ANON_KEY, SUPABASE_URL, isAuthBypassed, isDemoEnabled, isSupabaseConfigured,
 } from './supabase-config';
@@ -62,5 +63,3 @@ export async function updateSession(request: NextRequest) {
 
   return response;
 }
-
-import { createServerClient } from '@supabase/ssr';
